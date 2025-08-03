@@ -17,6 +17,7 @@ import Home from "./pages/Home";
 import AuthContainer from "./components/layout/AuthContainer";
 import AccLogin from "./pages/account/AccLogin";
 import CreatePost from "./pages/user/CreatePost";
+import Users from "./pages/admin/Users";
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="create-post" element={<CreatePost />} />
           <Route path="account-dash" element={<AccountDash />} />
           <Route path="admin-dash" element={<AdDashboard />} />
+          <Route path="users" element={<Users />} />
         </Route>
       </Routes>
     </Router>

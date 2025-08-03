@@ -41,6 +41,16 @@ export default function Container() {
                 </Link>
               </li>
             )}
+              {user?.role === "Admin" && (
+              <li>
+                <Link
+                  to="/users"
+                  className="hover:text-blue-500 transition-colors duration-200"
+                >
+                  Manage Users
+                </Link>
+              </li>
+            )}
             {user?.role === "User" && (
               <li>
                 <Link

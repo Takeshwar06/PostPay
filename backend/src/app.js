@@ -7,7 +7,7 @@ import { asyncHandler } from "./utils/asyncHandler.js";
 import authRoute from "./routes/auth.route.js"
 import claimRoute from "./routes/claim.route.js"
 import postRoute from "./routes/post.route.js"
-
+import userRoute from "./routes/user.route.js"
 
 const app = express();
 app.use(express.json());
@@ -19,7 +19,7 @@ app.use(express.json());
 // );
 app.use(cors());
 
-app.get("/user", (req, res) => {
+app.get("/", (req, res) => {
   res.json({
     name: "tiger",
     age: 21,
@@ -27,6 +27,7 @@ app.get("/user", (req, res) => {
   });
 });
 
+app.use("/api/v1/users",userRoute)
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/claims",claimRoute)
 app.use("/api/v1/posts", postRoute);

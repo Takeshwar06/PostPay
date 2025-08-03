@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js"; 
 import { ApiResponse } from "../utils/ApiResponse.js"; 
 import User from "../models/user.model.js";
-import { roles } from "../constants";
+import { roles } from "../constants.js";
 
 // Update User Role Controller
 export const updateUserRole = asyncHandler(async (req, res, next) => {
@@ -36,4 +36,13 @@ export const updateUserRole = asyncHandler(async (req, res, next) => {
     .json(
       new ApiResponse(200, user, `User role updated to ${role} successfully`)
     );
+});
+
+export const getUsers = asyncHandler(async (req, res, next) => {
+  const admin = req.user;
+  if (admin?.role !== "Admin") {
+    return next(new ApiError(403, "Access denied: Admin privileges required"));
+  }
+  const users = await User.find();
+  return res.status(200).json(new ApiResponse(200, users, "Users fetched"));
 });
