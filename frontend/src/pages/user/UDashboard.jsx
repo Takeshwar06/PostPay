@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Heart, Eye, Plus } from "lucide-react";
+import { Heart, Eye, Plus, ArrowRight } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import axiosPrivate from "../../utils/axiosPrivate";
@@ -31,14 +31,23 @@ export default function UDashboard() {
     <div className="p-6 space-y-6">
       {/* User Info */}
       <div className="relative bg-white rounded-2xl shadow-md p-6 flex flex-col sm:flex-row items-center gap-6 border">
-        {/* Post Button */}
-        <button
-          onClick={() => navigate("/create-post")}
-          className="absolute top-4 right-4 flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 text-sm rounded-full hover:bg-blue-700 transition-all"
-        >
-          <Plus size={16} />
-          Post
-        </button>
+        {/* Buttons Group */}
+        <div className="absolute top-4 right-4 flex gap-2">
+          <button
+            onClick={() => navigate("/create-post")}
+            className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 text-sm rounded-full hover:bg-blue-700 transition-all"
+          >
+            <Plus size={16} />
+            Post
+          </button>
+          <button
+           onClick={() => navigate("/user/my-claims")}
+            className="flex items-center gap-2 bg-green-600 text-white px-3 py-1.5 text-sm rounded-full hover:bg-green-700 transition-all"
+          >
+            Claims
+            <ArrowRight size={16}/>
+          </button>
+        </div>
 
         {/* User Info */}
         <img
@@ -78,6 +87,9 @@ export default function UDashboard() {
                 <h2 className="text-sm font-semibold">{post?.owner?.name}</h2>
                 <p className="text-xs text-gray-500">{post?.owner?.email}</p>
               </div>
+              <p className="bg-purple-100 text-sm text-purple-600 px-1 py-0  rounded-full">
+                {post.isClaimed ? "Claimed" : "Not Claimed"}
+              </p>
             </div>
 
             {/* Image */}

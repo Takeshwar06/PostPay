@@ -18,6 +18,8 @@ import AuthContainer from "./components/layout/AuthContainer";
 import AccLogin from "./pages/account/AccLogin";
 import CreatePost from "./pages/user/CreatePost";
 import Users from "./pages/admin/Users";
+import MyClaims from "./pages/user/MyClaims";
+import CreateClaim from "./pages/user/CreateClaim";
 
 export default function App() {
   return (
@@ -41,6 +43,8 @@ export default function App() {
           <Route path="account-dash" element={<AccountDash />} />
           <Route path="admin-dash" element={<AdDashboard />} />
           <Route path="users" element={<Users />} />
+          <Route path="user/my-claims" element={<MyClaims />} />
+          <Route path="user/create-claim" element={<CreateClaim />} />
         </Route>
       </Routes>
     </Router>

@@ -1,44 +1,55 @@
 import Claim from "../models/claim.model.js";
+import Post from "../models/post.model.js";
 import ReviewHistory from "../models/reviewHistory.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import getAmountPerLikeView from "../utils/getAmountPerLikeView.js";
+import { claimQueryBuilder } from "../utils/queryBuilder.js";
 
 export const createClaim = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
 
-  const { posts: rawPosts } = req.body;
+  // 1. Parse posts from req.body
+  console.log("Body keys:", req.body.posts[0].post);
+  console.log(
+    "Files:",
+    req.files.map((f) => f.fieldname)
+  );
 
-  if (!rawPosts) {
-    return next(new ApiError(400, "Posts are required"));
+  const rawPosts = req.body?.posts || [];
+
+  // console.log("rawPosts", rawPosts);
+  if (rawPosts.length === 0) {
+    return next(new ApiError(400, "No posts submitted."));
   }
 
-  const postsData = Array.isArray(rawPosts) ? rawPosts : [rawPosts];
-
+  // 2. Process each post
   const finalPosts = [];
-
   let totalLikes = 0;
   let totalViews = 0;
 
-  for (let i = 0; i < postsData.length; i++) {
-    const postData = postsData[i];
-    const postId = postData.post;
-    const likes = Number(postData.likes || 0);
-    const views = Number(postData.views || 0);
+  for (let i = 0; i < rawPosts.length; i++) {
+    const { post, likes, views } = rawPosts[i];
+    const postId = post;
+    const likeCount = Number(likes || 0);
+    const viewCount = Number(views || 0);
 
-    if (!postId || isNaN(likes) || isNaN(views)) {
+    if (!postId || isNaN(likeCount) || isNaN(viewCount)) {
       return next(new ApiError(400, `Invalid data for post at index ${i}`));
     }
 
-    const fileKey = `posts[${i}][screenshot]`;
-    const fileArray = req.files?.[fileKey];
-    if (!fileArray || fileArray.length === 0) {
+    // 3. Find file in flat req.files array
+    const screenshotFile = req.files.find(
+      (file) => file.fieldname === `posts[${i}][screenshot]`
+    );
+    if (!screenshotFile) {
       return next(new ApiError(400, `Screenshot missing for post index ${i}`));
     }
 
-    const screenshotBuffer = fileArray[0].buffer;
+    // 4. Upload to Cloudinary
+    const screenshotBuffer = screenshotFile.buffer;
     const screenshotUrl = await uploadOnCloudinary(screenshotBuffer);
     if (!screenshotUrl) {
       return next(
@@ -48,18 +59,20 @@ export const createClaim = asyncHandler(async (req, res, next) => {
 
     finalPosts.push({
       post: postId,
-      likes,
-      views,
-      screenshot: screenshotUrl,
+      likes: likeCount,
+      views: viewCount,
+      screenshot: screenshotUrl.url,
     });
 
-    totalLikes += likes;
-    totalViews += views;
+    totalLikes += likeCount;
+    totalViews += viewCount;
   }
 
+  // 5. Calculate amounts
   const { perLike, perView } = getAmountPerLikeView(totalLikes, totalViews);
   const finalAmount = totalLikes * perLike + totalViews * perView;
 
+  // 6. Save claim
   const claim = await Claim.create({
     user: userId,
     posts: finalPosts,
@@ -71,7 +84,13 @@ export const createClaim = asyncHandler(async (req, res, next) => {
     stage: "account",
   });
 
-  // add review history for the claim
+  // 7. Mark posts as claimed
+  const postIds = finalPosts.map((post) => post.post);
+  await Post.updateMany(
+    { _id: { $in: postIds } },
+    { $set: { isClaimed: true } }
+  );
+  // 7. Review history
   const reviewHistory = new ReviewHistory({
     claim: claim._id,
     actedBy: userId,
@@ -84,13 +103,15 @@ export const createClaim = asyncHandler(async (req, res, next) => {
   await reviewHistory.save();
   claim.reviewHistory.push(reviewHistory._id);
   await claim.save();
+
   res
     .status(201)
     .json(new ApiResponse(201, claim, "Claim submitted successfully"));
 });
 
 export const getClaims = asyncHandler(async (req, res, next) => {
-  const claims = await Claim.find()
+  const query = claimQueryBuilder(req.query);
+  const claims = await Claim.find(query)
     .populate({
       path: "user",
       select: "name email phone",
@@ -190,7 +211,7 @@ export const accountTeamAction = asyncHandler(async (req, res, next) => {
 
 // admin actions on claims
 export const adminActionOnClaim = asyncHandler(async (req, res, next) => {
-  const {  action } = req.body;
+  const { action } = req.body;
   const { claimId } = req.params;
   const userId = req.user._id;
   const userRole = req.user.role;
@@ -238,7 +259,7 @@ export const adminActionOnClaim = asyncHandler(async (req, res, next) => {
 
 // user actions on claims
 export const userActionOnClaim = asyncHandler(async (req, res, next) => {
-  const {  action } = req.body;
+  const { action } = req.body;
   const { claimId } = req.params;
   const userId = req.user._id;
   const userRole = req.user.role;

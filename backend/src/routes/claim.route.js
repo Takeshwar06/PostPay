@@ -12,9 +12,10 @@ import {
   verifyAdmin,
   verifyJWT,
 } from "../middlewares/auth.middleware.js";
+import {upload} from "../middlewares/multer.middleware.js"
 const router = express.Router();
 
-router.route("/").post(verifyJWT, createClaim);
+router.route("/").post(verifyJWT,upload.any(), createClaim);
 router.route("/").get(verifyJWT, verifyAccountPerson, getClaims);
 router.route("/user").get(verifyJWT, getClaimsByUser);
 

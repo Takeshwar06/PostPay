@@ -6,6 +6,7 @@ import Post from "../models/post.model.js";
 import Like from "../models/like.model.js";
 import View from "../models/view.model.js";
 import mongoose from "mongoose";
+import { postQueryBuilder } from "../utils/queryBuilder.js";
 
 export const createPost = asyncHandler(async (req, res, next) => {
   const { content } = req.body;
@@ -49,6 +50,8 @@ export const getPosts = asyncHandler(async (req, res, next) => {
 
     const pipeline = [];
 
+    console.log("req.query", req.query);
+    // Filter by userId (optional)
     if (userId) {
       pipeline.push({
         $match: {
@@ -56,6 +59,9 @@ export const getPosts = asyncHandler(async (req, res, next) => {
         },
       });
     }
+
+    const queryStages = postQueryBuilder(req.query);
+    pipeline.push(...queryStages);
 
     // Join user details
     pipeline.push(
@@ -90,25 +96,27 @@ export const getPosts = asyncHandler(async (req, res, next) => {
       },
     });
 
+    // Add like/view info specific to current user
     if (req.user?._id) {
       pipeline.push({
         $addFields: {
           isLikedByUser: {
-            $in: [new mongoose.Types.ObjectId(req.user?._id), "$likes.userId"],
+            $in: [new mongoose.Types.ObjectId(req.user._id), "$likes.userId"],
           },
           isViewedByUser: {
-            $in: [new mongoose.Types.ObjectId(req.user?._id), "$views.userId"],
+            $in: [new mongoose.Types.ObjectId(req.user._id), "$views.userId"],
           },
         },
       });
     }
 
-    // Project final result
+    // Final projection
     pipeline.push({
       $project: {
         _id: 1,
         content: 1,
         image: 1,
+        isClaimed: 1,
         createdAt: 1,
         updatedAt: 1,
         likeCount: { $size: "$likes" },
@@ -124,8 +132,10 @@ export const getPosts = asyncHandler(async (req, res, next) => {
       },
     });
 
+    // Sort by latest
     pipeline.push({ $sort: { createdAt: -1 } });
 
+    // Fetch posts
     const posts = await Post.aggregate(pipeline);
 
     if (!posts || posts.length === 0) {
@@ -140,6 +150,7 @@ export const getPosts = asyncHandler(async (req, res, next) => {
     next(new ApiError(500, "Failed to fetch posts", error));
   }
 });
+
 
 
 export const togglePostLike = asyncHandler(async (req, res, next) => {
