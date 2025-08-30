@@ -59,12 +59,15 @@ app.get("/test/:id", (req, res) => {
       <meta name="twitter:url" content="${product.url}" />
     </head>
     <body style="text-align:center;font-family:sans-serif;padding:20px;">
-      <h1>${product.title}</h1>
-      <img src="${product.image}" alt="${product.title}" style="max-width:100%;border-radius:10px;" />
-      <p>${product.description}</p>
-      <a href="${product.url}" style="display:inline-block;margin-top:20px;padding:12px 20px;background:#007bff;color:#fff;text-decoration:none;border-radius:5px;">
-        View on Website
-      </a>
+      <script>
+        // Try to open app first
+        window.location.href = "https://app.myosop.com";
+
+        // Fallback: after 2 seconds, stay on this page (or show a button)
+        setTimeout(() => {
+          document.body.innerHTML += '<p>If app does not open, view in browser: <a href="${product.url}">${product.url}</a></p>';
+        }, 2000);
+      </script>
     </body>
     </html>
   `;
