@@ -27,6 +27,51 @@ app.get("/", (req, res) => {
   });
 });
 
+app.get("/test/:id", (req, res) => {
+  const { id } = req.params;
+
+  // Dummy product data
+  const product = {
+    title: "Awesome Product",
+    description: "This is an amazing product you must check out!",
+    image: "https://myosop.com/static/images/banners/Myosop.png",
+    url: `https://app.myosop.com/products/${id}`
+  };
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8" />
+      <title>${product.title}</title>
+
+      <!-- Open Graph Meta -->
+      <meta property="og:title" content="${product.title}" />
+      <meta property="og:description" content="${product.description}" />
+      <meta property="og:image" content="${product.image}" />
+      <meta property="og:url" content="${product.url}" />
+
+      <!-- Twitter Card -->
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="${product.title}" />
+      <meta name="twitter:description" content="${product.description}" />
+      <meta name="twitter:image" content="${product.image}" />
+    </head>
+    <body style="text-align:center;font-family:sans-serif;padding:20px;">
+      <h1>${product.title}</h1>
+      <img src="${product.image}" alt="${product.title}" style="max-width:100%;border-radius:10px;" />
+      <p>${product.description}</p>
+      <a href="myosop://products/${id}" style="display:inline-block;margin-top:20px;padding:12px 20px;background:#007bff;color:#fff;text-decoration:none;border-radius:5px;">
+        Open in App
+      </a>
+    </body>
+    </html>
+  `;
+
+  res.send(html);
+});
+
+
 app.use("/api/v1/users",userRoute)
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/claims",claimRoute)
